@@ -17,7 +17,7 @@ class AutoRec(nn.Module):
         self.num_users = num_users
         self.num_items = num_items
         self.hidden_units = args.hidden_units   # 隐藏层神经元个数
-        self.lambda_value = args.lambda_value
+        self.lambda_value = args.lambda_value   # 
 
         self.encoder = nn.Sequential(
             nn.Linear(self.num_items, self.hidden_units),
