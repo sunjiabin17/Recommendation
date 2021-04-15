@@ -8,6 +8,7 @@ import argparse
 import torch.utils.data as Data
 import torch.optim as optim
 
+
 class AutoRec(nn.Module):
     def __init__(self, args, num_users, num_items):
         super(AutoRec, self).__init__()
@@ -15,7 +16,7 @@ class AutoRec(nn.Module):
         self.args = args
         self.num_users = num_users
         self.num_items = num_items
-        self.hidden_units = args.hidden_units
+        self.hidden_units = args.hidden_units   # 隐藏层神经元个数
         self.lambda_value = args.lambda_value
 
         self.encoder = nn.Sequential(
@@ -35,9 +36,11 @@ class AutoRec(nn.Module):
         cost = 0
         temp2 = 0
 
+        # 预测值decoder减去实际值input的均方误差
         cost += ((decoder-input) * mask_input).pow(2).sum()
         rmse = cost
 
+        # 正则项
         for i in optimizer.param_groups:
             for j in i['params']:
                 if j.data.dim() == 2:
@@ -45,15 +48,16 @@ class AutoRec(nn.Module):
         cost += temp2 * self.lambda_value * 0.5
         return cost, rmse
 
-def train(epoch):
+
+def train(epoch, loader):
     RMSE = 0
     cost_all = 0
-    for step, (batch_x, batch_mask_x, batch_y) in enumerate(loader):
+    for step, (batch_x, batch_mask_x, batch_y) in enumerate(loader):    # batch_y用不到
         batch_x = batch_x.type(torch.FloatTensor)
         batch_mask_x = batch_mask_x.type(torch.FloatTensor)
         if args.cuda:
-            batch_x.cuda()
-            batch_mask_x.cuda()
+            batch_x = batch_x.cuda()
+            batch_mask_x = batch_mask_x.cuda()
 
         decoder = autoRec(batch_x)
         loss, rmse = autoRec.loss(decoder=decoder, input=batch_x, optimizer=optimizer, mask_input=batch_mask_x)
@@ -66,12 +70,13 @@ def train(epoch):
     RMSE = np.sqrt(RMSE.detach().cpu().numpy() / (train_mask_r == 1).sum())
     print('epch ', epoch, 'train RMSE: ', RMSE)
 
+
 def test(epoch):
     test_r_tensor = torch.from_numpy(test_r).type(torch.FloatTensor)
     test_mask_r_tensor = torch.from_numpy(test_mask_r).type(torch.FloatTensor)
     if args.cuda:
-        test_r_tensor.cuda()
-        test_mask_r_tensor.cuda()
+        test_r_tensor = test_r_tensor.cuda()
+        test_mask_r_tensor = test_mask_r_tensor.cuda()
 
     decoder = autoRec(test_r_tensor)
 
@@ -88,6 +93,8 @@ def test(epoch):
     RMSE = np.sqrt(RMSE)
 
     print('epoch ', epoch, 'test RMSE: ', RMSE)
+
+
 def get_data(path, num_users, num_items, num_total_ratings, train_ratio):
     fp = open(path + 'ratings.dat')
     user_train_set = set()
@@ -98,8 +105,8 @@ def get_data(path, num_users, num_items, num_total_ratings, train_ratio):
     train_r = np.zeros((num_users, num_items))
     test_r = np.zeros((num_users, num_items))
 
-    train_mask_r = np.zeros((num_users, num_items))
-    test_mask_r = np.zeros((num_users, num_items))
+    train_mask_r = np.zeros((num_users, num_items)) # 用来标记user对item评分了
+    test_mask_r = np.zeros((num_users, num_items))  # 用来标记user对item评分了
 
     random_perm_idx = np.random.permutation(num_total_ratings)
     train_idx = random_perm_idx[0:int(num_total_ratings*train_ratio)]
@@ -149,21 +156,20 @@ if __name__ == '__main__':
     parser.add_argument('--display_step', type=int, default=1)
 
     args = parser.parse_args()
+    args.cuda = torch.cuda.is_available()
 
     np.random.seed(args.random_seed)
-    data_name = 'ml-1m'
     num_users = 6040
     num_items = 3952
     num_total_ratings = 1000209
-    train_ratio = 0.9
+    train_ratio = 0.9   # 用来划分训练集和测试集，90%为训练集
 
+    data_name = 'ml-1m'
     path = './%s' % data_name + '/'
 
     train_r, train_mask_r, test_r, test_mask_r, \
         user_train_set, item_train_set, user_test_set, item_test_set = \
         get_data(path, num_users, num_items, num_total_ratings, train_ratio)
-
-    args.cuda = torch.cuda.is_available()
 
     autoRec = AutoRec(args, num_users, num_items)
     if args.cuda:
@@ -179,5 +185,5 @@ if __name__ == '__main__':
     )
 
     for epoch in range(args.train_epoch):
-        train(epoch=epoch)
+        train(epoch=epoch, loader=loader)
         test(epoch=epoch)
