@@ -16,8 +16,8 @@ class FM_Layer(Layer):
         super(FM_Layer, self).__init__()
         self.dense_feature_columns, self.sparse_feature_columns = feature_columns
         # feature_length = 1296722 (1296709+13)
-        self.feature_length = sum([feat['feat_num'] for feat in self.sparse_feature_columns]) \
-                            + len(self.dense_feature_columns)
+        self.feature_num = sum([feat['feat_num'] for feat in self.sparse_feature_columns]) \
+                           + len(self.dense_feature_columns)
         self.k = k  # k = 10
         self.w_reg = w_reg
         self.v_reg = v_reg
@@ -26,11 +26,11 @@ class FM_Layer(Layer):
         self.w0 = self.add_weight(name='w0', shape=(1,),
                                   initializer=tf.zeros_initializer(),
                                   trainable=True)
-        self.w = self.add_weight(name='w', shape=(self.feature_length, 1),  # (1296722, 1)
+        self.w = self.add_weight(name='w', shape=(self.feature_num, 1),  # (1296722, 1)
                                  initializer=tf.random_normal_initializer(),
                                  regularizer=l2(self.w_reg),
                                  trainable=True)
-        self.V = self.add_weight(name='V', shape=(self.k, self.feature_length), # (10, 1296722) k = 10
+        self.V = self.add_weight(name='V', shape=(self.k, self.feature_num),  # (10, 1296722) k = 10
                                  initializer=tf.random_normal_initializer(),
                                  regularizer=l2(self.v_reg),
                                  trainable=True)
