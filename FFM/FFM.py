@@ -25,31 +25,31 @@ class FFM_Layer(Layer):
         self.w0 = self.add_weight(name='w0', shape=(1,),
                                   initializer=tf.zeros_initializer(),
                                   trainable=True)
-        self.w = self.add_weight(name='w', shape=(self.feature_num, 1),
+        self.w = self.add_weight(name='w', shape=(self.feature_num, 1), # (1296722, 1)
                                  initializer=tf.random_normal_initializer(),
                                  regularizer=l2(self.w_reg),
                                  trainable=True)
-        self.v = self.add_weight(name='v', shape=(self.feature_num, self.field_num),
+        self.v = self.add_weight(name='v', shape=(self.feature_num, self.field_num, self.k),    # (1296722, field_num, k)
                                  initializer=tf.random_normal_initializer(),
                                  regularizer=l2(self.v_reg),
                                  trainable=True)
 
     def call(self, inputs, **kwargs):
-        dense_inputs, sparse_inputs = inputs
+        dense_inputs, sparse_inputs = inputs    # shape = [batchsize, 13], [batchsize, 26]
         # one-hot encoding
         sparse_inputs = tf.concat(
             [tf.one_hot(sparse_inputs[:, i],
                         depth=self.sparse_feature_columns[i]['feat_num'])
              for i in range(sparse_inputs.shape[1])], axis=1  # sparse_inputs.shape[1] = 26
-        )
-        stack = tf.concat([dense_inputs, sparse_inputs], axis=1)
-        first_order = self.w0 + tf.matmul(tf.concat(stack, axis=-1), self.w)
+        )   # sparse_inputs.shape=(batchsize, 1296709) one-hot之后
+        stack = tf.concat([dense_inputs, sparse_inputs], axis=1)    # # stack.shape=(batchsize, 1296722) 1296709+13
+        first_order = self.w0 + tf.matmul(tf.concat(stack, axis=-1), self.w) # shape=(batchsize, 1)
 
         second_order = 0
-        field_f = tf.tensordot(stack, self.v, axes=[1, 0]) # [batchsize, field_num, k]
+        field_f = tf.tensordot(stack, self.v, axes=[1, 0]) # (batchsize, 1296722) tensordot (1296722, field_num, k) = [batchsize, field_num, k]
         for i in range(self.field_num):
             for j in range(i+1, self.field_num):
-                second_order += tf.reduce_sum(
+                second_order += tf.reduce_sum(  # field_f[:, i].shape=[batchsize, k]
                     tf.multiply(field_f[:, i], field_f[:, j]), axis=1, keepdims=True # [batchsize, k]
                 )# [batchsize, 1]
         return first_order + second_order
@@ -68,9 +68,9 @@ class FFM(tf.keras.Model):
         self.dense_feature_columns, self.sparse_feature_columns = feature_columns
         self.ffm = FFM_Layer(feature_columns, k, w_reg, v_reg)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs, **kwargs):   # inputs.shape=([batchsize, 13], [batchsize, 26])
         result_ffm = self.ffm(inputs)
-        outputs = tf.nn.sigmoid(result_ffm)
+        outputs = tf.nn.sigmoid(result_ffm) # (batchsize, 1)
         return outputs
 
     def summary(self, **kwargs):
@@ -78,6 +78,7 @@ class FFM(tf.keras.Model):
         sparse_inputs = Input(shape=(len(self.sparse_feature_columns), ), dtype=tf.int32)
         tf.keras.Model(inputs=[dense_inputs, sparse_inputs],
                        outputs=self.call([dense_inputs, sparse_inputs])).summary()
+
 
 from utils import create_criteo_dataset
 from tensorflow.keras.optimizers import Adam
@@ -104,7 +105,7 @@ if __name__ == '__main__':
                                                          read_part=read_part,
                                                          sample_num=sample_num,
                                                          test_size=test_size)
-    train_X, train_y = train
+    train_X, train_y = train    #train_X.shape=[(80000,13),(80000,26)], train_y.shape=(80000,)
     test_X, test_y = test
 
     model = FFM(feature_columns, k)
