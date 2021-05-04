@@ -101,7 +101,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 if __name__ == '__main__':
 
     os.environ['CUDA_VISIBLE_DEVICES'] = '2, 3'
-    file = '../criteo_small.txt'
+    file = '../data/criteo_small.txt'
     read_part = True
     sample_num = 1000000
     test_size = 0.2

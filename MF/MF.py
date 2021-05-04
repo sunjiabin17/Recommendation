@@ -119,7 +119,7 @@ class MF(tf.keras.Model):
 
 
 if __name__ == '__main__':
-    file = '../ml-1m/ratings.dat'
+    file = '../data/ml-1m/ratings.dat'
     test_size = 0.2
     latent_dim = 32
 

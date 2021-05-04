@@ -89,7 +89,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 if __name__ == '__main__':
-    file = '../criteo_small.txt'
+    file = '../data/criteo_small.txt'
     read_part = True
     sample_num = 100000
     test_size = 0.2

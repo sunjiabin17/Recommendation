@@ -130,7 +130,7 @@ class ItemBasedCF():
         print('precision=%.4f\trecall=%.4f\tcoverage=%.4f'% (precision, recall, coverage))
 
 if __name__ == '__main__':
-    rating_file = 'ml-1m/ratings.dat'
+    rating_file = 'data/ml-1m/ratings.dat'
     itemCF = ItemBasedCF()
     itemCF.get_dataset(rating_file)
     itemCF.calc_movie_sim()

@@ -16,7 +16,7 @@ class LFM:
         self._init_Params()
 
     def _init_model(self):
-        file_path = 'ml-1m/ratings.dat'
+        file_path = 'data/ml-1m/ratings.dat'
         self.frame = pd.read_csv(file_path, sep='::', engine='python')
         self.frame.columns = ['UserId', 'ItemId', 'Rating', 'TimeStamp']
         self.user_ids = set(self.frame['UserId'].values)
