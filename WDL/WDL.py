@@ -77,7 +77,7 @@ class WideDeep(tf.keras.Model):
         dense_inputs, sparse_inputs = inputs    # [None, 13] {None, 26]
         sparse_embed = tf.concat([self.embed_layers['embed_{}'.format(i)](sparse_inputs[:, i])  # [None, 208]
                                   for i in range(sparse_inputs.shape[1])], axis=-1)
-        x = tf.concat([sparse_embed, dense_inputs], axis=-1)   # [None, 211]
+        x = tf.concat([sparse_embed, dense_inputs], axis=-1)   # [None, 221]
 
         # Wide
         wide_out = self.linear(dense_inputs)    # [None, 1]
@@ -113,6 +113,7 @@ if __name__ == '__main__':
     batch_size = 1024
     epochs = 5
 
+    starttime = time()
     # create dataset
     feature_columns, train, test = create_criteo_dataset(file, embed_dim, read_part, sample_num, test_size)
 
@@ -141,3 +142,4 @@ if __name__ == '__main__':
         validation_split=0.1
     )
     print('test AUC: %f' % model.evaluate(test_X, test_y, batch_size=batch_size)[1])
+    print('time cost: ', time() - starttime)
