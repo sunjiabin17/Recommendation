@@ -73,7 +73,7 @@ class WideDeep(tf.keras.Model):
         self.linear = Linear()
         self.final_dense = Dense(1, activation=None)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs, training=None, mask=None):
         dense_inputs, sparse_inputs = inputs    # [None, 13] {None, 26]
         sparse_embed = tf.concat([self.embed_layers['embed_{}'.format(i)](sparse_inputs[:, i])  # [None, 208]
                                   for i in range(sparse_inputs.shape[1])], axis=-1)
