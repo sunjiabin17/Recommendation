@@ -39,8 +39,7 @@ def create_amazon_electronic_dataset(file, embed_dim=8, maxlen=40):
     '''
 
     print('==========Data Preprocess Start===========')
-    pkl = '../data/remap.pkl'
-    with open(pkl, 'rb') as f:
+    with open(file, 'rb') as f:
         reviews_df = pickle.load(f)
         cate_list = pickle.load(f)
         user_count, item_count, cate_count, example_count = pickle.load(f)
@@ -80,8 +79,10 @@ def create_amazon_electronic_dataset(file, embed_dim=8, maxlen=40):
                 train_data.append([hist_i, [pos_list[i], cate_list[pos_list[i]]], 1])
                 train_data.append([hist_i, [neg_list[i], cate_list[neg_list[i]]], 0])
 
-    feature_columns = [[], [sparseFeature('item_id', item_count, embed_dim),]]
-    behavior_list = ['item_id']
+    # feature_columns = [[], [sparseFeature('item_id', item_count, embed_dim),]]
+    # behavior_list = ['item_id']
+    feature_columns = [[], [sparseFeature('item_id', item_count, embed_dim), sparseFeature('categories', cate_count, embed_dim)]]
+    behavior_list = ['item_id', 'categories']
 
     # shuffle
     random.shuffle(train_data)
@@ -100,13 +101,13 @@ def create_amazon_electronic_dataset(file, embed_dim=8, maxlen=40):
                np.array(train['target_item'].tolist())]
     train_y = train['label'].values
 
-    val_X = [np.array([0.] * len(val)),
+    val_X = [np.array([0] * len(val)),
              np.array([0] * len(val)),
                pad_sequences(val['hist'], maxlen=maxlen),
                np.array(val['target_item'].tolist())]
     val_y = val['label'].values
 
-    test_X = [np.array([0.] * len(test)),
+    test_X = [np.array([0] * len(test)),
               np.array([0] * len(test)),
                pad_sequences(test['hist'], maxlen=maxlen),
                np.array(test['target_item'].tolist())]
@@ -115,5 +116,5 @@ def create_amazon_electronic_dataset(file, embed_dim=8, maxlen=40):
     print('==========Data Preprocess Done==========')
     return feature_columns, behavior_list, (train_X, train_y), (val_X, val_y), (test_X, test_y)
 
-if __name__ == '__main__':
-    create_amazon_electronic_dataset('../data/remap.pkl')
+# if __name__ == '__main__':
+#     create_amazon_electronic_dataset('../data/remap.pkl')
